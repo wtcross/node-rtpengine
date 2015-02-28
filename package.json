@@ -39,6 +39,7 @@
     "joi": "^5.1.0",
     "lodash": "^3.2.0",
     "node-bencode": "0.0.0",
-    "node-uuid": "^1.4.2"
+    "node-uuid": "^1.4.2",
+    "param-case": "^1.1.1"
   }
 }

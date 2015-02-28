@@ -2,25 +2,33 @@
 
 "use strict";
 var Rtpengine = require("commander");
+var Bluebird  = require("bluebird");
 var Client    = require("../lib/Client");
 var _         = require("lodash");
 var pkg       = require("../package.json");
 
 Rtpengine
 	.version(pkg.version)
-	.option("-H, --host <ip address>", "specify host rtpengine is running on", _.identity, "127.0.0.1")
-	.option("-P, --port <port>", "specify port rtpengine is listening on", parseInt, 22222);
+	.option("-H, --host <ip address>", "host rtpengine is running on", _.identity)
+	.option("-P, --port <port>", "port rtpengine is listening on", parseInt)
+	.option("-T, --timeout <milliseconds>", "number of milliseconds to wait before retrying a request", parseInt)
+	.option("-R, --retries <count>", "number of times to retry a request", parseInt);
+
+function createClient () {
+	return Client.createClient(_.pick(Rtpengine, "port", "host", "retries", "timeout"));
+}
 
 Rtpengine
 	.command("ping")
 	.description("ping an rtpengine instance")
 	.action(function () {
-		var client = new Client(Rtpengine.port, Rtpengine.host);
-		client.ping()
-		.then(function (result) {
-			console.log(JSON.stringify(result, null, "  "));
-		})
-		.finally(client.destroy);
+		Bluebird.using(createClient(), function (client) {
+			return client
+			.ping()
+			.then(function (result) {
+				console.log(JSON.stringify(result, null, "  "));
+			});
+		});
 	});
 
 Rtpengine
@@ -28,13 +36,14 @@ Rtpengine
 	.option("-l, --limit <limit>", "limit the number of calls to return", parseInt, 32)
 	.description("list calls")
 	.action(function (options) {
-		var client = new Client(Rtpengine.port, Rtpengine.host);
-		client.list({ limit : options.limit })
-		.get("calls")
-		.then(function (calls) {
-			console.log(JSON.stringify(calls, null, "  "));
-		})
-		.finally(client.destroy);
+		Bluebird.using(createClient(), function (client) {
+			return client
+			.list(_.pick(options, "limit"))
+			.get("calls")
+			.then(function (calls) {
+				console.log(JSON.stringify(calls, null, "  "));
+			});
+		});
 	});
 
 Rtpengine
@@ -42,16 +51,17 @@ Rtpengine
 	.option("-f, --from-tag <from-tag>", "from tag associated with a call leg")
 	.option("-t, --to-tag <to-tag>", "to tag associated with a call leg")
 	.description("search for calls")
-	.action(function (callId) {
-		var client = new Client(Rtpengine.port, Rtpengine.host);
+	.action(function (callId, options) {
+		options = _.merge(options, { callId : callId });
+		Bluebird.using(createClient(), function (client) {
+			options = _.merge(options, { callId : callId });
 
-		client.query({
-			"call-id" : callId
-		})
-		.then(function (result) {
-			console.log(JSON.stringify(result, null, "  "));
-		})
-		.finally(client.destroy);
+			return client
+			.query(_.pick(options, "callId", "fromTag", "toTag"))
+			.then(function (result) {
+				console.log(JSON.stringify(result, null, "  "));
+			});
+		});
 	});
 
 Rtpengine
@@ -59,17 +69,16 @@ Rtpengine
 	.option("-t, --to-tag <to-tag>", "to tag associated with a call leg")
 	.option("-f, --via-tag <via-tag>", "via tag associated with a call leg")
 	.description("delete a call")
-	.action(function (callId, fromTag) {
-		var client = new Client(Rtpengine.port, Rtpengine.host);
+	.action(function (callId, fromTag, options) {
+		Bluebird.using(createClient(), function (client) {
+			options = _.merge(options, { callId : callId, fromTag : fromTag });
 
-		client.delete({
-			"call-id"  : callId,
-			"from-tag" : fromTag
-		})
-		.then(function (result) {
-			console.log(JSON.stringify(result, null, "  "));
-		})
-		.finally(client.destroy);
+			return client
+			.delete(_.pick(options, "callId", "fromTag", "toTag", "viaTag"))
+			.then(function (result) {
+				console.log(JSON.stringify(result, null, "  "));
+			});
+		});
 	});
 
 Rtpengine.parse(process.argv);
