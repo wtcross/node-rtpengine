@@ -1,0 +1,79 @@
+#!/usr/bin/env node
+
+"use strict";
+var Rtpengine = require("commander");
+var Client    = require("../lib/Client");
+var _         = require("lodash");
+var pkg       = require("../package.json");
+
+Rtpengine
+	.version(pkg.version)
+	.option("-H, --host <ip address>", "specify host rtpengine is running on", _.identity, "127.0.0.1")
+	.option("-P, --port <port>", "specify port rtpengine is listening on", parseInt, 22222);
+
+Rtpengine
+	.command("ping")
+	.description("ping an rtpengine instance")
+	.action(function () {
+		var client = new Client(Rtpengine.port, Rtpengine.host);
+		client.ping()
+		.then(function (result) {
+			console.log(JSON.stringify(result, null, "  "));
+		})
+		.finally(client.destroy);
+	});
+
+Rtpengine
+	.command("list")
+	.option("-l, --limit <limit>", "limit the number of calls to return", parseInt, 32)
+	.description("list calls")
+	.action(function (options) {
+		var client = new Client(Rtpengine.port, Rtpengine.host);
+		client.list({ limit : options.limit })
+		.get("calls")
+		.then(function (calls) {
+			console.log(JSON.stringify(calls, null, "  "));
+		})
+		.finally(client.destroy);
+	});
+
+Rtpengine
+	.command("query <callId>")
+	.option("-f, --from-tag <from-tag>", "from tag associated with a call leg")
+	.option("-t, --to-tag <to-tag>", "to tag associated with a call leg")
+	.description("search for calls")
+	.action(function (callId) {
+		var client = new Client(Rtpengine.port, Rtpengine.host);
+
+		client.query({
+			"call-id" : callId
+		})
+		.then(function (result) {
+			console.log(JSON.stringify(result, null, "  "));
+		})
+		.finally(client.destroy);
+	});
+
+Rtpengine
+	.command("delete <callId> <fromTag>")
+	.option("-t, --to-tag <to-tag>", "to tag associated with a call leg")
+	.option("-f, --via-tag <via-tag>", "via tag associated with a call leg")
+	.description("delete a call")
+	.action(function (callId, fromTag) {
+		var client = new Client(Rtpengine.port, Rtpengine.host);
+
+		client.delete({
+			"call-id"  : callId,
+			"from-tag" : fromTag
+		})
+		.then(function (result) {
+			console.log(JSON.stringify(result, null, "  "));
+		})
+		.finally(client.destroy);
+	});
+
+Rtpengine.parse(process.argv);
+
+if (!process.argv.slice(2).length) {
+	Rtpengine.outputHelp();
+}
