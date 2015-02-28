@@ -5,14 +5,12 @@ A Node client library for rtpengine.
 **Note: very much a work in progress!**
 
 The intent of this library is to make it easy to build tools that work with [rtpengine](https://github.com/sipwise/rtpengine). Rtpengine has a UDP-based API that involves sending a message of the following form:
-	```
-	[request cookie][space][bencoded request command payload]
-	```
+
+`[request cookie][space][bencoded request command payload]`
 
 It will respond with a message like:
-	```
-	[request cookie][space][bencoded reply payload]
-	```
+
+`[request cookie][space][bencoded reply payload]`
 
 This library abstracts away the UDP mess and makes it possible to work with rtpengine like this:
 ```javascript
