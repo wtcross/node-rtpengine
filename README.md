@@ -17,7 +17,7 @@ This library abstracts away the UDP mess and makes it possible to work with rtpe
 var client = new Client();
 
 client.query({
-	"call-id" : "6eb82892-6804-4002-b2b6-363b7e11e435"
+	callId : "6eb82892-6804-4002-b2b6-363b7e11e435"
 })
 .then(function (reply) {
 	// do something with the reply payload
