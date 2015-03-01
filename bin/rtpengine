@@ -15,7 +15,7 @@ Rtpengine
 	.option("-R, --retries <count>", "number of times to retry a request", parseInt);
 
 function createClient () {
-	return Client.createClient(_.pick(Rtpengine, "port", "host", "retries", "timeout"));
+	return Client.create(_.pick(Rtpengine, "port", "host", "retries", "timeout"));
 }
 
 Rtpengine
